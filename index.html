@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>CommunityBoard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-soft: #111827;
+      --card: #111827;
+      --card-soft: #020617;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79,70,229,0.18);
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --radius-lg: 18px;
+      --radius-full: 999px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px 12px 40px;
+      font-family: system-ui, sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 50%, #000 100%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(0, 0.9fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell { grid-template-columns: 1fr; }
+    }
+
+    .glass-card {
+      background: linear-gradient(to bottom right, rgba(15,23,42,0.97), rgba(2,6,23,0.97));
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148,163,184,0.18);
+      padding: 16px;
+      box-shadow: 0 18px 35px rgba(15,23,42,0.65);
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    /* ---------------- AUTH TABS ---------------- */
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(148,163,184,0.35);
+      background: rgba(15,23,42,0.7);
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.2s;
+    }
+
+    .auth-tab.active {
+      background: rgba(79,70,229,0.35);
+      border-color: rgba(129,140,248,0.9);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .auth-form {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .auth-form.active {
+      display: flex;
+    }
+
+    .auth-input {
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(148,163,184,0.4);
+      background: rgba(15,23,42,0.9);
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .auth-input:focus {
+      border-color: rgba(129,140,248,0.9);
+    }
+
+    .btn-primary {
+      border-radius: var(--radius-full);
+      border: none;
+      padding: 8px 12px;
+      background: radial-gradient(circle at top, #4f46e5, #4338ca);
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 12px 25px rgba(79,70,229,0.6);
+    }
+
+    .btn-secondary {
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(148,163,184,0.4);
+      padding: 8px 12px;
+      background: rgba(15,23,42,0.8);
+      color: var(--text-soft);
+      cursor: pointer;
+    }
+
+    button[disabled] {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    /* ---------------- POSTS ---------------- */
+
+    .post-card {
+      background: rgba(15,23,42,0.96);
+      border: 1px solid rgba(30,64,175,0.7);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .post-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .post-meta {
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+
+    .post-body {
+      white-space: pre-wrap;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .post-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .vote-row {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .vote-btn {
+      background: transparent;
+      border: 1px solid rgba(148,163,184,0.4);
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .vote-btn:hover {
+      border-color: rgba(129,140,248,0.9);
+      color: var(--text);
+    }
+
+    .comment-toggle {
+      background: transparent;
+      border: 1px solid rgba(148,163,184,0.4);
+      border-radius: var(--radius-full);
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--text-soft);
+      cursor: pointer;
+    }
+
+    .comment-toggle:hover {
+      border-color: rgba(129,140,248,0.9);
+      color: var(--text);
+    }
+
+    .comment-section {
+      margin-top: 10px;
+      border-top: 1px solid rgba(148,163,184,0.2);
+      padding-top: 8px;
+    }
+
+    .comment-form {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .comment-input {
+      flex: 1;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(148,163,184,0.35);
+      background: rgba(15,23,42,0.96);
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      resize: none;
+      height: 36px;
+    }
+
+    .comment-input:focus {
+      border-color: rgba(129,140,248,0.9);
+    }
+
+    .comment-list {
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .comment {
+      border-bottom: 1px solid rgba(148,163,184,0.2);
+      padding: 6px 0;
+      font-size: 13px;
+    }
+
+    .comment:last-child {
+      border-bottom: none;
+    }
+
+    .comment-meta {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-bottom: 2px;
+    }
+
+    .comment-body {
+      white-space: pre-wrap;
+    }
+
+    .muted {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    /* ---------------- SEARCH + FILTER ---------------- */
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(148,163,184,0.35);
+      background: rgba(15,23,42,0.9);
+      color: var(--text);
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(148,163,184,0.4);
+      padding: 4px 10px;
+      background: rgba(15,23,42,0.8);
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .filter-chip.active {
+      background: rgba(79,70,229,0.35);
+      border-color: rgba(129,140,248,0.9);
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- LEFT SIDE -->
+    <div class="glass-card">
+
+      <h2 style="margin-top:0;">CommunityBoard</h2>
+
+      <!-- AUTH TABS -->
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Login</div>
+        <div class="auth-tab" data-tab="register">Registrierung</div>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="login-form" class="auth-form active">
+        <input id="login-email" class="auth-input" type="email" placeholder="E-Mail" />
+        <input id="login-password" class="auth-input" type="password" placeholder="Passwort" />
+        <button class="btn-primary" id="login-submit">Anmelden</button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="register-form" class="auth-form">
+        <input id="register-email" class="auth-input" type="email" placeholder="E-Mail" />
+        <input id="register-password" class="auth-input" type="password" placeholder="Passwort" />
+        <button class="btn-primary" id="register-submit">Registrieren</button>
+      </form>
+
+      <button id="logout-btn" class="btn-secondary" style="margin-top:12px; display:none;">
+        Abmelden
+      </button>
+
+      <div id="auth-msg" style="margin-top:10px; font-size:13px;"></div>
+
+      <hr style="border-color:rgba(148,163,184,0.2); margin:20px 0;">
+
+      <!-- CREATE POST -->
+      <h3>Beitrag erstellen</h3>
+      <input id="post-title" class="auth-input" placeholder="Titel" />
+      <textarea id="post-content" class="auth-input" style="height:80px;" placeholder="Inhalt"></textarea>
+
+      <button id="post-submit" class="btn-primary" style="margin-top:10px;">Veröffentlichen</button>
+
+      <hr style="border-color:rgba(148,163,184,0.2); margin:20px 0;">
+
+      <!-- SEARCH -->
+      <input id="search-input" class="search-input" placeholder="Beiträge durchsuchen …">
+
+      <!-- FILTER -->
+      <div class="filter-row">
+        <button class="filter-chip active" data-filter="new">Neueste</button>
+        <button class="filter-chip" data-filter="top">Top</button>
+        <button class="filter-chip" data-filter="comments">Diskutiert</button>
+      </div>
+
+      <!-- POSTS -->
+      <div id="posts"></div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="glass-card">
+      <h3>Status</h3>
+      <p><strong>Benutzer:</strong> <span id="user-status">Gast</span></p>
+      <p><strong>Beiträge:</strong> <span id="post-count">–</span></p>
+      <p><strong>Kommentare geladen:</strong> <span id="comment-count">–</span></p>
+      <p class="muted" style="margin-top:16px;">
+        Die App ist rein Text-basiert: keine Bilder, kein Storage, keine KI.
+        Alles läuft direkt im Browser über Firebase Auth + Firestore.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- LOGIK / FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      serverTimestamp,
+      query,
+      orderBy,
+      doc,
+      updateDoc,
+      increment,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    /* ---------------------------------------------------------
+       HIER DEINE FIREBASE-KONFIG EINSETZEN (statt 111 111 111)
+       Beispiel (nicht verwenden, nur Struktur):
+
+       const firebaseConfig = {
+         apiKey: "...",
+         authDomain: "...",
+         projectId: "...",
+         storageBucket: "...",
+         messagingSenderId: "...",
+         appId: "..."
+       };
+    --------------------------------------------------------- */
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyClVj8khCCv8fPFH12AEluhHoY7xVEappc",
+  authDomain: "jo-diskusiunen.firebaseapp.com",
+  projectId: "jo-diskusiunen",
+  storageBucket: "jo-diskusiunen.firebasestorage.app",
+  messagingSenderId: "478767815504",
+  appId: "1:478767815504:web:f0e935fdad3ec3d3ea6a55"
+};
+
+    /* ---------------------------------------------------------
+       INITIALISIERUNG
+    --------------------------------------------------------- */
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    /* ---------------------------------------------------------
+       DOM ELEMENTE
+    --------------------------------------------------------- */
+
+    const loginTab = document.querySelector('[data-tab="login"]');
+    const registerTab = document.querySelector('[data-tab="register"]');
+    const loginForm = document.getElementById("login-form");
+    const registerForm = document.getElementById("register-form");
+
+    const loginEmail = document.getElementById("login-email");
+    const loginPassword = document.getElementById("login-password");
+    const loginSubmit = document.getElementById("login-submit");
+
+    const registerEmail = document.getElementById("register-email");
+    const registerPassword = document.getElementById("register-password");
+    const registerSubmit = document.getElementById("register-submit");
+
+    const logoutBtn = document.getElementById("logout-btn");
+    const authMsg = document.getElementById("auth-msg");
+
+    const postTitle = document.getElementById("post-title");
+    const postContent = document.getElementById("post-content");
+    const postSubmit = document.getElementById("post-submit");
+
+    const searchInput = document.getElementById("search-input");
+    const postsContainer = document.getElementById("posts");
+    const filterChips = document.querySelectorAll(".filter-chip");
+
+    const userStatus = document.getElementById("user-status");
+    const postCount = document.getElementById("post-count");
+    const commentCount = document.getElementById("comment-count");
+
+    let currentUser = null;
+    let postsData = [];
+    let currentFilter = "new";
+    let totalCommentsLoaded = 0;
+
+    /* ---------------------------------------------------------
+       TAB LOGIK
+    --------------------------------------------------------- */
+
+    function activateTab(tab) {
+      loginTab.classList.remove("active");
+      registerTab.classList.remove("active");
+      loginForm.classList.remove("active");
+      registerForm.classList.remove("active");
+
+      tab.classList.add("active");
+
+      if (tab.dataset.tab === "login") {
+        loginForm.classList.add("active");
+      } else {
+        registerForm.classList.add("active");
+      }
+    }
+
+    loginTab.addEventListener("click", () => activateTab(loginTab));
+    registerTab.addEventListener("click", () => activateTab(registerTab));
+
+    /* ---------------------------------------------------------
+       LOGIN
+    --------------------------------------------------------- */
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      authMsg.textContent = "";
+
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value.trim();
+      if (!email || !password) {
+        authMsg.textContent = "Bitte E-Mail und Passwort eingeben.";
+        return;
+      }
+
+      loginSubmit.disabled = true;
+      loginSubmit.textContent = "Anmeldung …";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        authMsg.textContent = "Erfolgreich angemeldet.";
+      } catch (err) {
+        authMsg.textContent = "Fehler: " + (err.message || "Bitte Eingaben prüfen.");
+      } finally {
+        loginSubmit.disabled = false;
+        loginSubmit.textContent = "Anmelden";
+      }
+    });
+
+    /* ---------------------------------------------------------
+       REGISTRIERUNG
+    --------------------------------------------------------- */
+
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      authMsg.textContent = "";
+
+      const email = registerEmail.value.trim();
+      const password = registerPassword.value.trim();
+      if (!email || !password) {
+        authMsg.textContent = "Bitte E-Mail und Passwort eingeben.";
+        return;
+      }
+
+      registerSubmit.disabled = true;
+      registerSubmit.textContent = "Registriere …";
+
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        authMsg.textContent = "Registrierung erfolgreich. Du bist jetzt angemeldet.";
+        activateTab(loginTab);
+      } catch (err) {
+        authMsg.textContent = "Fehler: " + (err.message || "Bitte Eingaben prüfen.");
+      } finally {
+        registerSubmit.disabled = false;
+        registerSubmit.textContent = "Registrieren";
+      }
+    });
+
+    /* ---------------------------------------------------------
+       LOGOUT
+    --------------------------------------------------------- */
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    /* ---------------------------------------------------------
+       AUTH STATE
+    --------------------------------------------------------- */
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user || null;
+
+      if (user) {
+        userStatus.textContent = user.email || "Unbekannt";
+        logoutBtn.style.display = "block";
+      } else {
+        userStatus.textContent = "Gast";
+        logoutBtn.style.display = "none";
+      }
+
+      renderPosts();
+    });
+
+    /* ---------------------------------------------------------
+       POST ERSTELLEN
+    --------------------------------------------------------- */
+
+    postSubmit.addEventListener("click", async () => {
+      if (!currentUser) {
+        alert("Bitte melde dich an, um Beiträge zu erstellen.");
+        return;
+      }
+
+      const title = postTitle.value.trim();
+      const content = postContent.value.trim();
+      if (!title || !content) {
+        alert("Titel und Inhalt dürfen nicht leer sein.");
+        return;
+      }
+
+      postSubmit.disabled = true;
+      postSubmit.textContent = "Veröffentliche …";
+
+      try {
+        await addDoc(collection(db, "posts"), {
+          title,
+          content,
+          authorEmail: currentUser.email || "Unbekannt",
+          createdAt: serverTimestamp(),
+          votes: 0,
+          commentsCount: 0
+        });
+        postTitle.value = "";
+        postContent.value = "";
+      } catch (err) {
+        alert("Fehler beim Erstellen des Beitrags: " + (err.message || ""));
+      } finally {
+        postSubmit.disabled = false;
+        postSubmit.textContent = "Veröffentlichen";
+      }
+    });
+
+    /* ---------------------------------------------------------
+       POSTS LADEN
+    --------------------------------------------------------- */
+
+    const postsQuery = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+
+    onSnapshot(postsQuery, (snapshot) => {
+      postsData = [];
+      snapshot.forEach((docSnap) => {
+        postsData.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      postCount.textContent = postsData.length.toString();
+      renderPosts();
+    });
+
+    /* ---------------------------------------------------------
+       FILTER + SUCHE
+    --------------------------------------------------------- */
+
+    filterChips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        filterChips.forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        currentFilter = chip.dataset.filter || "new";
+        renderPosts();
+      });
+    });
+
+    searchInput.addEventListener("input", renderPosts);
+
+    function sortPosts(list) {
+      if (currentFilter === "new") {
+        return list.slice().sort((a, b) => {
+          const tA = (a.createdAt?.seconds) || 0;
+          const tB = (b.createdAt?.seconds) || 0;
+          return tB - tA;
+        });
+      }
+      if (currentFilter === "top") {
+        return list.slice().sort((a, b) => (b.votes || 0) - (a.votes || 0));
+      }
+      if (currentFilter === "comments") {
+        return list.slice().sort((a, b) => (b.commentsCount || 0) - (a.commentsCount || 0));
+      }
+      return list;
+    }
+
+    /* ---------------------------------------------------------
+       POSTS RENDERN
+    --------------------------------------------------------- */
+
+    function renderPosts() {
+      postsContainer.innerHTML = "";
+      totalCommentsLoaded = 0;
+
+      let filtered = postsData;
+      const q = searchInput.value.trim().toLowerCase();
+
+      if (q) {
+        filtered = filtered.filter((p) =>
+          (p.title || "").toLowerCase().includes(q) ||
+          (p.content || "").toLowerCase().includes(q)
+        );
+      }
+
+      const sorted = sortPosts(filtered);
+
+      if (!sorted.length) {
+        postsContainer.innerHTML = '<div class="muted">Keine Beiträge gefunden.</div>';
+        commentCount.textContent = "0";
+        return;
+      }
+
+      sorted.forEach((post) => {
+        const el = document.createElement("div");
+        el.className = "post-card";
+
+        const date = post.createdAt?.toDate?.() || null;
+        const dateStr = date
+          ? date.toLocaleString("de-DE", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          : "Datum folgt";
+
+        const shortEmail = (post.authorEmail || "Unbekannt").split("@")[0];
+        const votes = post.votes || 0;
+        const commentsCount = post.commentsCount || 0;
+
+        el.innerHTML = `
+          <div class="post-title">${escapeHtml(post.title || "")}</div>
+          <div class="post-meta">
+            von ${escapeHtml(shortEmail)} • ${dateStr} • ${votes} Votes • ${commentsCount} Kommentare
+          </div>
+          <div class="post-body">${escapeHtml(post.content || "")}</div>
+          <div class="post-footer">
+            <div class="vote-row">
+              <button class="vote-btn vote-up">▲</button>
+              <span class="vote-score">${votes}</span>
+              <button class="vote-btn vote-down">▼</button>
+            </div>
+            <button class="comment-toggle">Kommentare anzeigen</button>
+          </div>
+          <div class="comment-section" style="display:none;">
+            <div class="comment-form">
+              <textarea class="comment-input" placeholder="${
+                currentUser ? "Kommentar schreiben …" : "Bitte anmelden, um zu kommentieren."
+              }" ${currentUser ? "" : "disabled"}></textarea>
+              <button class="btn-secondary comment-submit">Senden</button>
+            </div>
+            <div class="comment-list">
+              <div class="muted">Kommentare werden geladen …</div>
+            </div>
+          </div>
+        `;
+
+        const voteUpBtn = el.querySelector(".vote-up");
+        const voteDownBtn = el.querySelector(".vote-down");
+        const voteScoreSpan = el.querySelector(".vote-score");
+        const commentToggleBtn = el.querySelector(".comment-toggle");
+        const commentSection = el.querySelector(".comment-section");
+        const commentList = el.querySelector(".comment-list");
+        const commentInput = el.querySelector(".comment-input");
+        const commentSubmitBtn = el.querySelector(".comment-submit");
+
+        voteUpBtn.addEventListener("click", async () => {
+          if (!currentUser) {
+            alert("Bitte melde dich an, um zu voten.");
+            return;
+          }
+          await updateVotes(post.id, 1, voteScoreSpan);
+        });
+
+        voteDownBtn.addEventListener("click", async () => {
+          if (!currentUser) {
+            alert("Bitte melde dich an, um zu voten.");
+            return;
+          }
+          await updateVotes(post.id, -1, voteScoreSpan);
+        });
+
+        commentToggleBtn.addEventListener("click", () => {
+          const visible = commentSection.style.display !== "none";
+          commentSection.style.display = visible ? "none" : "block";
+          commentToggleBtn.textContent = visible
+            ? "Kommentare anzeigen"
+            : "Kommentare verbergen";
+
+          if (!visible && commentList.dataset.loaded !== "true") {
+            loadCommentsForPost(post.id, commentList);
+          }
+        });
+
+        commentSubmitBtn.addEventListener("click", async () => {
+          if (!currentUser) {
+            alert("Bitte melde dich an, um zu kommentieren.");
+            return;
+          }
+          const text = commentInput.value.trim();
+          if (!text) return;
+
+          commentSubmitBtn.disabled = true;
+          commentSubmitBtn.textContent = "Sendet …";
+
+          try {
+            const commentsRef = collection(db, "posts", post.id, "comments");
+            await addDoc(commentsRef, {
+              text,
+              authorEmail: currentUser.email || "Unbekannt",
+              createdAt: serverTimestamp()
+            });
+
+            const postRef = doc(db, "posts", post.id);
+            await updateDoc(postRef, {
+              commentsCount: increment(1)
+            });
+
+            commentInput.value = "";
+          } catch (err) {
+            alert("Fehler beim Kommentieren: " + (err.message || ""));
+          } finally {
+            commentSubmitBtn.disabled = false;
+            commentSubmitBtn.textContent = "Senden";
+          }
+        });
+
+        postsContainer.appendChild(el);
+      });
+
+      commentCount.textContent = totalCommentsLoaded.toString();
+    }
+
+    /* ---------------------------------------------------------
+       KOMMENTARE LADEN
+    --------------------------------------------------------- */
+
+    async function loadCommentsForPost(postId, container) {
+      container.innerHTML = '<div class="muted">Kommentare werden geladen …</div>';
+      const commentsRef = collection(db, "posts", postId, "comments");
+      const commentsQuery = query(commentsRef, orderBy("createdAt", "asc"));
+
+      onSnapshot(commentsQuery, (snapshot) => {
+        container.innerHTML = "";
+        let count = 0;
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          count++;
+
+          const date = data.createdAt?.toDate?.() || null;
+          const dateStr = date
+            ? date.toLocaleString("de-DE", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+              })
+            : "Datum folgt";
+
+          const shortEmail = (data.authorEmail || "Unbekannt").split("@")[0];
+
+          const cEl = document.createElement("div");
+          cEl.className = "comment";
+          cEl.innerHTML = `
+            <div class="comment-meta">
+              ${escapeHtml(shortEmail)} • ${dateStr}
+            </div>
+            <div class="comment-body">${escapeHtml(data.text || "")}</div>
+          `;
+
+          container.appendChild(cEl);
+        });
+
+        if (count === 0) {
+          container.innerHTML = '<div class="muted">Noch keine Kommentare.</div>';
+        }
+
+        totalCommentsLoaded += count;
+        commentCount.textContent = totalCommentsLoaded.toString();
+        container.dataset.loaded = "true";
+      });
+    }
+
+    /* ---------------------------------------------------------
+       VOTES
+    --------------------------------------------------------- */
+
+    async function updateVotes(postId, delta, voteScoreSpan) {
+      try {
+        const postRef = doc(db, "posts", postId);
+        const snap = await getDoc(postRef);
+        if (!snap.exists()) return;
+
+        const currentVotes = snap.data().votes || 0;
+        const newVotes = currentVotes + delta;
+        await updateDoc(postRef, { votes: newVotes });
+
+        voteScoreSpan.textContent = newVotes;
+      } catch (err) {
+        alert("Fehler beim Voten: " + (err.message || ""));
+      }
+    }
+
+    /* ---------------------------------------------------------
+       HELPER
+    --------------------------------------------------------- */
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    (async () => {
+      try {
+        const metaRef = doc(db, "meta", "communityboard");
+        const snap = await getDoc(metaRef);
+        if (!snap.exists()) {
+          await setDoc(metaRef, {
+            createdAt: serverTimestamp(),
+            info: "Meta-Dokument für CommunityBoard (optional, kann gelöscht werden)."
+          });
+        }
+      } catch (e) {
+        console.warn("Meta-Init fehlgeschlagen:", e);
+      }
+    })();
+  </script>
+</body>
+</html>
